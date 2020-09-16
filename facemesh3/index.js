@@ -1,7 +1,9 @@
 import {TRIANGULATION} from './triangulation.js'
 import {Wavefront} from "./wavefront.js";
+import {Stats} from "./stats.js";
 
 let saveAsObjFile = false;
+let doStats = false;
 
 function download(url, filename) {
     const anchor = document.createElement('a');
@@ -40,9 +42,13 @@ async function run() {
 
     console.log(predictions);
 
-
-
     let prediction = predictions[0];
+
+    if(doStats){
+        let stats = new Stats();
+        stats.statsMesh(prediction.mesh);
+        stats.statsMesh(prediction.scaledMesh);
+    }
 
     if (saveAsObjFile) {
         let wavefront = new Wavefront(prediction.mesh, TRIANGULATION);
@@ -64,10 +70,9 @@ async function run() {
         // ensure canvas is resized when window changes size
         window.addEventListener('resize', () => app.resizeCanvas());
 
-        // create plane entity
         const plane = new pc.Entity('Plane');
         plane.setEulerAngles(90, 0, 0);
-        plane.setLocalScale(image.width / 200, 1, image.height / 200);
+        plane.setLocalScale(image.width, 1, image.height);
         app.root.addChild(plane);
 
         let asset = new pc.Asset('face image', 'texture', {url:image.src});
@@ -82,6 +87,45 @@ async function run() {
                 plane.script.create('unlitTexture', {attributes: {
                     mainTexture: loadedAsset
                 }});
+
+                const face = new pc.Entity('Face');
+                app.root.addChild(face);
+                face.setEulerAngles(0, 180, 180);
+                face.setPosition(0, 1, 0);
+
+                let root = new pc.GraphNode();
+                let model = new pc.Model();
+                model.graph = root;
+
+                let vertices = prediction.scaledMesh;
+                let vertexCount = vertices.length;
+                let positions = new Float32Array(vertexCount * 3);
+                for(let i = 0; i < vertexCount; i++) {
+                    positions[i * 3] = vertices[i][0] - image.width / 2;
+                    positions[i * 3 + 1] = vertices[i][1] - image.height / 2;
+                    positions[i * 3 + 2] = vertices[i][2] - 20;
+                }
+
+                let mesh = new pc.Mesh(app.graphicsDevice);
+                mesh.setPositions(positions);
+                mesh.setIndices(TRIANGULATION);
+                mesh.update();
+
+                let material = new pc.StandardMaterial();
+                material.emissive = new pc.Color(1, 0, 0);
+                let node = new pc.GraphNode();
+                let meshInstance = new pc.MeshInstance(node, mesh, material);
+
+                root.addChild(node);
+                model.meshInstances.push(meshInstance);
+                model.getGraph().syncHierarchy();
+
+                model.generateWireframe();
+                meshInstance.renderStyle = pc.RENDERSTYLE_WIREFRAME;
+
+                face.addComponent('model');
+                face.model.model = model;
+
             });
         })
 
@@ -91,16 +135,13 @@ async function run() {
             clearColor: new pc.Color(0.1, 0.1, 0.1)
         });
         app.root.addChild(camera);
-        camera.setPosition(0, 0, 3);
+        camera.setPosition(0, 0, 800);
 
         // create directional light entity
         const light = new pc.Entity('light');
         light.addComponent('light');
         app.root.addChild(light);
         light.setEulerAngles(45, 0, 0);
-
-        // rotate the box according to the delta time since the last frame
-        //app.on('update', dt => plane.rotate(10 * dt, 20 * dt, 30 * dt));
 
         app.start();
     }
