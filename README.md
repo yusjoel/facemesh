@@ -11,3 +11,9 @@ tensorflow-models/facemesh试用
 1. tfjs相关脚本来自unpkg.com, 版本2.3.0
 1. facemesh来自cdn.jsdelivr.net, 版本0.0.4
 1. 已经修改facemesh中的模型地址指向lib
+
+## facemesh3
+1. 根据特征点创建脸部模型
+   1. 三角面的数据来自于demo/triangulation.js
+   2. 保存为Wavefront Obj格式
+   3. OBJ格式中索引是基于1的, 所以要+1
