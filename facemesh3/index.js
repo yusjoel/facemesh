@@ -61,7 +61,9 @@ async function run() {
     {
         // create a PlayCanvas application
         const canvas = document.getElementById('application');
-        const app = new pc.Application(canvas);
+        const app = new pc.Application(canvas, {
+            keyboard: new pc.Keyboard(window)
+        });
 
         // fill the available space at full resolution
         app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
@@ -88,6 +90,8 @@ async function run() {
                     mainTexture: loadedAsset
                 }});
 
+                plane.enabled = false;
+
                 const face = new pc.Entity('Face');
                 app.root.addChild(face);
                 face.setEulerAngles(0, 180, 180);
@@ -106,8 +110,15 @@ async function run() {
                     positions[i * 3 + 2] = vertices[i][2] - 20;
                 }
 
+                let uvs = new Float32Array(vertexCount * 2);
+                for(let i = 0; i < vertexCount; i++) {
+                    uvs[i * 2] = vertices[i][0] / image.width;
+                    uvs[i * 2 + 1] = 1 - vertices[i][1] / image.height;
+                }
+
                 let mesh = new pc.Mesh(app.graphicsDevice);
                 mesh.setPositions(positions);
+                mesh.setUvs(0, uvs);
                 mesh.setIndices(TRIANGULATION);
                 mesh.update();
 
@@ -120,12 +131,16 @@ async function run() {
                 model.meshInstances.push(meshInstance);
                 model.getGraph().syncHierarchy();
 
-                model.generateWireframe();
-                meshInstance.renderStyle = pc.RENDERSTYLE_WIREFRAME;
+                //model.generateWireframe();
+                //meshInstance.renderStyle = pc.RENDERSTYLE_WIREFRAME;
 
                 face.addComponent('model');
                 face.model.model = model;
 
+                face.addComponent('script');
+                face.script.create('unlitTexture', {attributes: {
+                        mainTexture: loadedAsset
+                    }});
             });
         })
 
@@ -137,11 +152,18 @@ async function run() {
         app.root.addChild(camera);
         camera.setPosition(0, 0, 800);
 
-        // create directional light entity
-        const light = new pc.Entity('light');
-        light.addComponent('light');
-        app.root.addChild(light);
-        light.setEulerAngles(45, 0, 0);
+        let speed = 1;
+        let theta = 0;
+        let radius = 800;
+        app.on('update', function (dt) {
+            if (app.keyboard.isPressed(pc.KEY_LEFT))
+                theta += dt * speed;
+            else if (app.keyboard.isPressed(pc.KEY_RIGHT))
+                theta -= dt * speed;
+
+            camera.setPosition(Math.sin(theta) * radius, 0, Math.cos(theta) * radius);
+            camera.lookAt(0, 0, 0, 0, 1, 0);
+        });
 
         app.start();
     }
