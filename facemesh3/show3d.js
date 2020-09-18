@@ -45,8 +45,7 @@ Show3d.prototype.loadScriptAsync = function(url, doneCallback) {
 
 Show3d.prototype.initialize = function (callback) {
     // create a PlayCanvas application
-    const canvas = document.getElementById('application');
-    const app = new pc.Application(canvas, {
+    const app = new pc.Application(this.canvas, {
         keyboard: new pc.Keyboard(window)
     });
 
