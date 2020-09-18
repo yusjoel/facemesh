@@ -1,3 +1,5 @@
+import {femaleFaceData} from './character-customization/female.js'
+
 async function run() {
     {
         // create a PlayCanvas application
@@ -41,8 +43,40 @@ async function run() {
 
                 faceModel.addComponent('model', {
                     type: 'asset',
-                    asset: asset
+                    asset: asset,
                 });
+
+                let boneMap = new Map();
+                window.boneBrow = null;
+
+                /**
+                 * @type {pc.SkinInstance[]}
+                 */
+                let skinInstance = faceModel.model.model.skinInstances[0];
+                let bones = skinInstance.bones;
+                for (let i = 0; i < bones.length; i++) {
+                    if(bones[i].name === 'Bone_Brow')
+                        window.boneBrow = bones[i];
+
+                    boneMap.set(bones[i].name, bones[i]);
+                }
+
+                let gui = new dat.GUI();
+                let folder = gui.addFolder('Brow');
+                let brow = {x: 1, y:1, z:1};
+                folder.add(brow, "x", 0.5, 1.5).onChange(x => {
+                    brow.x = x;
+                    window.boneBrow.setLocalScale(brow.x, brow.y, brow.z);
+                });
+                folder.add(brow, "y", 0.5, 1.5).onChange(y => {
+                    brow.y = y;
+                    window.boneBrow.setLocalScale(brow.x, brow.y, brow.z);
+                });
+                folder.add(brow, "z", 0.5, 1.5).onChange(z => {
+                    brow.z = z;
+                    window.boneBrow.setLocalScale(brow.x, brow.y, brow.z);
+                });
+                folder.open();
             }
         })
 

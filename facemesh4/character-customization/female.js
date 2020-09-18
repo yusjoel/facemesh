@@ -1,4 +1,4 @@
-{
+export let femaleFaceData = {
     "bones": [
 {
     "type": "PositionX",
