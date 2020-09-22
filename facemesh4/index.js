@@ -121,7 +121,13 @@ async function run() {
         // create a PlayCanvas application
         const canvas = document.getElementById('application');
         const app = new pc.Application(canvas, {
-            keyboard: new pc.Keyboard(window)
+            keyboard: new pc.Keyboard(window),
+            graphicsDeviceOptions: {
+                'antialias': true,
+                'alpha': false,
+                'preserveDrawingBuffer': false,
+                'preferWebGl2': true
+            },
         });
 
         // fill the available space at full resolution
