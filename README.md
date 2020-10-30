@@ -19,7 +19,10 @@ facemesh的内容转到了face-landmarks-detection。
     1. 执行```yarn```, 安装依赖包
     1. 执行```yarn build```编译
     1. 执行```yarn watch```调试 
-1. 已经修正了2.3.0编译失败的问题
+1. backend
+    1. tfjs-backend-wasm 2.3.0编译会报错
+    1. 编译成功后, 使用webgl, cpu正常, wasm会报错
+    1. 这里使用了cpu
 1. 如果访问不了tfhub.dev, 找到facemesh.esm.js, 将tfhub.dev替换为storage.googleapis.com/tfhub-tfjs-modules， 或者使用浏览器插件进行重定向
 1. 如果一切正常， 会在控制台打印predictions对象
 
