@@ -1,1 +1,5 @@
 .idea
+/facemesh1/.cache
+/facemesh1/dist
+/facemesh1/node_modules
+/facemesh1/yarn.lock

@@ -41,17 +41,19 @@ Show3d.prototype.initialize = function (callback) {
     // ensure canvas is resized when window changes size
     window.addEventListener('resize', () => app.resizeCanvas());
 
-    if (callback)
-        callback();
-
-    // let self = this;
-    // this.loadScripts(['unlit-texture.js'], function () {
-    //     self.loadImage(function (asset) {
-    //         self.imageAsset = asset;
-    //         callback();
-    //     });
-    // });
+    this.loadScripts(['unlit-texture.js'], function () {
+        if (callback)
+            callback();
+    });
 };
+
+Show3d.prototype.toggleFaceMesh = function(){
+    this.faceMesh.enabled = !this.faceMesh.enabled;
+};
+
+Show3d.prototype.toggleFaceModel = function() {
+    this.faceModel.enabled = !this.faceModel.enabled;
+}
 
 Show3d.prototype.createCamera = function () {
     // create camera entity
@@ -71,6 +73,7 @@ Show3d.prototype.createCamera = function () {
 };
 
 Show3d.prototype.loadFaceModel = function (url, callback) {
+    let self = this;
     pc.app.assets.loadFromUrl(url, 'model', function (err, asset) {
         if (err) {
             console.log(err);
@@ -86,11 +89,80 @@ Show3d.prototype.loadFaceModel = function (url, callback) {
                 asset: asset,
             });
 
+            self.faceModel = faceModel;
+
             if (callback)
                 callback(faceModel);
         }
     })
-}
+};
+
+Show3d.prototype.createFaceMesh = function(image, vertices, indices, callback) {
+    this.image = image;
+    this.vertexCount = vertices.length;
+    this.positions = new Float32Array(this.vertexCount * 3);
+    for(let i = 0; i < this.vertexCount; i++) {
+        this.positions[i * 3] = vertices[i][0] - image.width / 2;
+        this.positions[i * 3 + 1] = vertices[i][1] - image.height / 2;
+        this.positions[i * 3 + 2] = vertices[i][2] - 20;
+    }
+
+    this.uvs = new Float32Array(this.vertexCount * 2);
+    for(let i = 0; i < this.vertexCount; i++) {
+        this.uvs[i * 2] = vertices[i][0] / this.image.width;
+        this.uvs[i * 2 + 1] = 1 - vertices[i][1] / this.image.height;
+    }
+    this.indices = indices;
+    this.imageAsset = null;
+
+    let self = this;
+    this.loadImage(function (asset) {
+        self.imageAsset = asset;
+        self._createFaceMesh();
+        if(callback)
+            callback();
+    });
+};
+
+Show3d.prototype._createFaceMesh = function() {
+    const face = new pc.Entity('Face');
+    pc.app.root.addChild(face);
+    face.setEulerAngles(0, 0, 180);
+    face.setLocalScale(0.001, 0.001, 0.001);
+    face.setPosition(0, 1.7, 0);
+
+    let root = new pc.GraphNode();
+    let model = new pc.Model();
+    model.graph = root;
+
+    let mesh = new pc.Mesh(pc.app.graphicsDevice);
+    mesh.setPositions(this.positions);
+    mesh.setUvs(0, this.uvs);
+    mesh.setIndices(this.indices);
+    mesh.update();
+
+    let material = new pc.StandardMaterial();
+    let node = new pc.GraphNode();
+    let meshInstance = new pc.MeshInstance(node, mesh, material);
+
+    root.addChild(node);
+    model.meshInstances.push(meshInstance);
+    model.getGraph().syncHierarchy();
+
+    //material.emissive = new pc.Color(1, 0, 0);
+    //model.generateWireframe();
+    //meshInstance.renderStyle = pc.RENDERSTYLE_WIREFRAME;
+
+    face.addComponent('model');
+    face.model.model = model;
+
+    face.addComponent('script');
+    face.script.create('unlitTexture', {attributes: {
+            mainTexture: this.imageAsset
+        }});
+
+    this.faceMesh = face;
+};
 
 Show3d.prototype.start = function () {
     pc.app.start();

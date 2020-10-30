@@ -119,11 +119,16 @@ FaceCustomization.prototype.adjustBone = function (groupId, value) {
 
 /**
  * 显示捏脸控制参数UI
+ * @param show3d {Show3d}
  */
-FaceCustomization.prototype.showUI = function () {
+FaceCustomization.prototype.showUI = function (show3d) {
     let self = this;
 
     let gui = new dat.GUI();
+
+    let f = gui.addFolder('控制');
+    f.add(show3d, 'toggleFaceMesh').name('FaceMesh');
+    f.add(show3d, 'toggleFaceModel').name('FaceModel');
 
     let parameterCount = this.parameters.length;
     for (let i = 0; i < parameterCount; i++) {
